@@ -1,143 +1,120 @@
 'use client'
 
 import { useState, useEffect } from "react"
+import { usePrivy } from "@privy-io/react-auth"
 import { LandingPage } from "@/components/landing-page"
 import { RoleSelection } from "@/components/role-selection"
 import { RegistrationForms } from "@/components/registration-forms"
-import { PassengerView } from "@/components/dashboard/passenger-view"
 import { DriverView } from "@/components/dashboard/driver-view"
-
-type AppState = 'landing' | 'role-selection' | 'registration' | 'dashboard'
-type UserRole = 'driver' | 'passenger' | null
-type RideStatus = 'Idle' | 'Finding Pilot' | 'Accepted' | 'Started' | 'Completed'
+import { PassengerView } from "@/components/dashboard/passenger-view"
 
 export default function Home() {
-    const [appState, setAppState] = useState<AppState>('landing')
-    const [userRole, setUserRole] = useState<UserRole>(null)
+    // 1. Privy Hook for Authentication
+    const { login, authenticated, ready, user, logout } = usePrivy()
 
-    // Simulation State
-    const [rideStatus, setRideStatus] = useState<RideStatus>('Idle')
+    // 2. App State
+    const [view, setView] = useState<'landing' | 'role_selection' | 'registration' | 'dashboard'>('landing')
+    const [role, setRole] = useState<'driver' | 'passenger' | null>(null)
+    const [rideStatus, setRideStatus] = useState<'Idle' | 'Finding Pilot' | 'Accepted' | 'Started' | 'Completed'>('Idle')
 
-    // Passenger Simulation Logic
+    // 3. Effect: Handle View Switching based on Auth
     useEffect(() => {
-        if (userRole === 'passenger' && rideStatus === 'Finding Pilot') {
-            const timer = setTimeout(() => {
-                setRideStatus('Accepted')
-            }, 3000)
-            return () => clearTimeout(timer)
+        if (!ready) return;
+
+        if (authenticated) {
+            // If logged in but hasn't picked a flow, go to Role Selection
+            // Note: In a real app, you'd check the DB here to see if they are already registered
+            if (view === 'landing') {
+                setView('role_selection')
+            }
+        } else {
+            // If not logged in, force Landing Page
+            setView('landing')
+            setRole(null)
         }
+    }, [authenticated, ready, view])
 
-        if (userRole === 'passenger' && rideStatus === 'Accepted') {
-            const timer = setTimeout(() => {
-                setRideStatus('Started')
-            }, 3000)
-            return () => clearTimeout(timer)
-        }
-
-        if (userRole === 'passenger' && rideStatus === 'Started') {
-            const timer = setTimeout(() => {
-                setRideStatus('Completed')
-            }, 8000) // 8s drive
-            return () => clearTimeout(timer)
-        }
-
-        if (userRole === 'passenger' && rideStatus === 'Completed') {
-            const timer = setTimeout(() => {
-                setRideStatus('Idle')
-            }, 3000)
-            return () => clearTimeout(timer)
-        }
-    }, [rideStatus, userRole])
-
-
-    const handleConnectWallet = () => {
-        setAppState('role-selection')
+    // 4. Loading State
+    if (!ready) {
+        return <div className="min-h-screen bg-black flex items-center justify-center text-purple-500">Loading Block Rides...</div>
     }
 
-    const handleRoleSelect = (role: UserRole) => {
-        setUserRole(role)
-        setAppState('registration')
+    // 5. Render Logic
+    
+    // VIEW: Landing Page (Unauthenticated)
+    if (!authenticated || view === 'landing') {
+        return <LandingPage onConnect={login} />
     }
 
-    const handleRegistration = (data: any) => {
-        console.log("Registered:", data)
-        setAppState('dashboard')
-    }
-
-    const handlePassengerRequest = (pickup: string, dest: string, price: string) => {
-        setRideStatus('Finding Pilot')
-    }
-
-    const handleDriverAccept = () => {
-        setRideStatus('Accepted')
-    }
-
-    const handleDriverStart = () => {
-        setRideStatus('Started')
-    }
-
-    const handleDriverComplete = () => {
-        setRideStatus('Completed')
-        setTimeout(() => setRideStatus('Idle'), 3000)
-    }
-
-    // --- Render Layout ---
-    // If Landing Page, use full width/height without padding
-    if (appState === 'landing') {
+    // VIEW: Role Selection
+    if (view === 'role_selection') {
         return (
-            <main className="min-h-screen bg-[#121212]">
-                <LandingPage onConnect={handleConnectWallet} />
-            </main>
+            <div className="min-h-screen bg-black p-4">
+                 {/* Temporary Logout for testing */}
+                <button onClick={logout} className="absolute top-4 right-4 text-xs text-gray-500 hover:text-white">Logout</button>
+                <RoleSelection onSelectRole={(selectedRole) => {
+                    setRole(selectedRole)
+                    setView('registration')
+                }} />
+            </div>
         )
     }
 
-    // Application Layout (Inner App)
+    // VIEW: Registration
+    if (view === 'registration' && role) {
+        return (
+            <div className="min-h-screen bg-black p-4">
+                <RegistrationForms 
+                    role={role} 
+                    onRegister={(data) => {
+                        console.log("Registered:", data)
+                        // Here you would call your Smart Contract register function
+                        setView('dashboard')
+                    }} 
+                />
+            </div>
+        )
+    }
+
+    // VIEW: Dashboard (Driver or Passenger)
     return (
-        <main className="min-h-screen bg-[#121212] flex flex-col items-center p-4 md:p-8 relative overflow-hidden">
-
-            {/* Background Ambience */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#10B981]/10 blur-[100px] rounded-full" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[#1F2937]/30 blur-[100px] rounded-full" />
-            </div>
-
-            {/* Header / Nav (Minimal) */}
-            <nav className="w-full max-w-7xl flex justify-between items-center mb-8 z-10">
-                <div className="text-xl font-bold tracking-tighter text-white">Block Rides</div>
-                <div className="flex items-center gap-4">
-                    <div className="h-2 w-2 rounded-full bg-[#10B981] animate-pulse" />
-                    <span className="text-sm font-mono text-[#10B981]">0x71C...9B</span>
+        <div className="min-h-screen bg-black text-white p-4 md:p-8">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Dashboard Header */}
+                <div className="flex justify-between items-center pb-6 border-b border-white/10">
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        block<span className="text-purple-500">rides</span>
+                        <span className="ml-4 text-sm font-normal text-gray-500 px-3 py-1 bg-white/5 rounded-full">
+                            {role === 'driver' ? 'Driver Panel' : 'Passenger Hub'}
+                        </span>
+                    </h1>
+                    <div className="flex items-center gap-4">
+                         <span className="text-sm text-gray-400 font-mono hidden md:inline-block">
+                            {user?.wallet?.address?.slice(0, 6)}...{user?.wallet?.address?.slice(-4)}
+                        </span>
+                        <button onClick={logout} className="text-sm bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full transition-colors">
+                            Disconnect
+                        </button>
+                    </div>
                 </div>
-            </nav>
 
-            {/* Main Content Area */}
-            <div className="w-full max-w-7xl relative z-10">
-
-                {appState === 'role-selection' && (
-                    <RoleSelection onSelectRole={handleRoleSelect} />
-                )}
-
-                {appState === 'registration' && userRole && (
-                    <RegistrationForms role={userRole} onRegister={handleRegistration} />
-                )}
-
-                {appState === 'dashboard' && userRole === 'passenger' && (
-                    <PassengerView
+                {role === 'passenger' ? (
+                    <PassengerView 
                         rideStatus={rideStatus as any}
-                        onRequestRide={handlePassengerRequest}
+                        onRequestRide={(pickup, dest, price) => {
+                            console.log("Request:", pickup, dest, price)
+                            setRideStatus('Finding Pilot') // Mock update
+                        }}
+                    />
+                ) : (
+                    <DriverView 
+                        rideStatus={rideStatus === 'Finding Pilot' ? 'Idle' : rideStatus as any} // Mock mapping
+                        onAcceptRide={() => setRideStatus('Accepted')}
+                        onStartRide={() => setRideStatus('Started')}
+                        onCompleteRide={() => setRideStatus('Completed')}
                     />
                 )}
-
-                {appState === 'dashboard' && userRole === 'driver' && (
-                    <DriverView
-                        rideStatus={rideStatus as any}
-                        onAcceptRide={handleDriverAccept}
-                        onStartRide={handleDriverStart}
-                        onCompleteRide={handleDriverComplete}
-                    />
-                )}
-
             </div>
-        </main>
+        </div>
     )
 }

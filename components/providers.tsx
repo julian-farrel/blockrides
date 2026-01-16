@@ -1,0 +1,28 @@
+'use client';
+
+import { PrivyProvider } from '@privy-io/react-auth';
+import { sepolia } from 'viem/chains';
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <PrivyProvider
+      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || 'YOUR_PRIVY_APP_ID'}
+      config={{
+        appearance: {
+          theme: 'dark',
+          accentColor: '#9333EA', // Purple-600
+        },
+        // FIX: Nest 'createOnLogin' inside 'ethereum'
+        embeddedWallets: {
+          ethereum: {
+            createOnLogin: 'users-without-wallets',
+          },
+        },
+        defaultChain: sepolia,
+        supportedChains: [sepolia],
+      }}
+    >
+      {children}
+    </PrivyProvider>
+  );
+}
