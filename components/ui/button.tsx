@@ -18,13 +18,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
         const Comp = asChild ? Slot : "button"
 
-        const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+        const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
 
         const variants = {
-            default: "bg-[#10B981] text-white hover:bg-[#059669] shadow-[0_0_15px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] transition-all duration-300",
-            outline: "border border-[#10B981] bg-transparent text-[#10B981] hover:bg-[#10B981] hover:text-white",
-            ghost: "hover:bg-accent hover:text-accent-foreground",
-            glass: "glass text-white hover:bg-white/10"
+            default: "bg-purple-600 text-white hover:bg-purple-700 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(147,51,234,0.5)] border border-purple-500/20",
+            outline: "border border-purple-500 bg-transparent text-purple-400 hover:bg-purple-950/30 hover:text-purple-300",
+            ghost: "hover:bg-white/10 hover:text-white",
+            glass: "glass text-white hover:bg-white/10 shadow-lg"
         }
 
         const sizes = {
