@@ -4,37 +4,40 @@
   --color-background: #000000;
   --color-foreground: #ffffff;
   
-  --color-primary: #9333EA; /* Purple-600 */
-  --color-primary-foreground: #ffffff;
+  --color-primary: #ffffff;
+  --color-primary-foreground: #000000;
   
-  --color-secondary: #1F2937;
+  --color-secondary: #27272a; /* Zinc-800 */
   --color-secondary-foreground: #ffffff;
   
-  --color-muted: #374151; 
-  --color-muted-foreground: #9CA3AF;
+  --color-muted: #27272a; 
+  --color-muted-foreground: #a1a1aa; /* Zinc-400 */
 
-  --color-border: #27272a; /* Zinc-800 */
+  --color-border: #27272a;
   --color-input: #27272a;
-  --color-ring: #A855F7; /* Purple-500 */
+  --color-ring: #ffffff;
   
   --radius-lg: 0.5rem;
   --radius-md: calc(var(--radius-lg) - 2px);
   --radius-sm: calc(var(--radius-md) - 2px);
 
-  --animate-drive: drive 3s linear infinite;
+  --animate-drive: drive 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   
   @keyframes drive {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(200%); }
+    0% { transform: translateX(-100%); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { transform: translateX(200%); opacity: 0; }
   }
 }
 
-/* Glassmorphism Utilities */
+/* Glassmorphism Utilities - Monochrome Edition */
 @utility glass {
   background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @utility glass-card {
@@ -43,29 +46,30 @@
 
 /* Global Reset */
 :root {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-roboto);
+  background-color: #000000;
+  color: #ffffff;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
-  background-color: #000000; /* Pure Black */
+  background-color: #000000;
+  selection-background-color: #ffffff;
+  selection-color: #000000;
 }
 
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #09090b; 
+  background: #000000; 
 }
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46; 
+  background: #333; 
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b; 
+  background: #555; 
 }

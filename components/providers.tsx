@@ -6,13 +6,14 @@ import { sepolia } from 'viem/chains';
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <PrivyProvider
-      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || 'YOUR_PRIVY_APP_ID'}
+      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || 'cmkgkw9p803tyjo0c6ke9iqhw'}
       config={{
         appearance: {
           theme: 'dark',
-          accentColor: '#9333EA', // Purple-600
+          accentColor: '#FFFFFF', // Pure White Accent
+          showWalletLoginFirst: true,
+          logo: 'https://your-logo-url.com/logo.png',
         },
-        // FIX: Nest 'createOnLogin' inside 'ethereum'
         embeddedWallets: {
           ethereum: {
             createOnLogin: 'users-without-wallets',

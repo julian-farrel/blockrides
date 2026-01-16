@@ -18,19 +18,26 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
         const Comp = asChild ? Slot : "button"
 
-        const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
+        const baseStyles = "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium ring-offset-background transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 cursor-pointer"
 
         const variants = {
-            default: "bg-purple-600 text-white hover:bg-purple-700 shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(147,51,234,0.5)] border border-purple-500/20",
-            outline: "border border-purple-500 bg-transparent text-purple-400 hover:bg-purple-950/30 hover:text-purple-300",
+            // Solid White with intense white glow
+            default: "bg-white text-black hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.25)] hover:shadow-[0_0_35px_rgba(255,255,255,0.5)] border border-transparent",
+            
+            // Thin white border, glow on hover
+            outline: "border border-white/20 bg-transparent text-white hover:bg-white hover:text-black hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:border-white",
+            
+            // Subtle
             ghost: "hover:bg-white/10 hover:text-white",
-            glass: "glass text-white hover:bg-white/10 shadow-lg"
+            
+            // Glassy
+            glass: "glass text-white hover:bg-white/10 shadow-lg border-white/10"
         }
 
         const sizes = {
             default: "h-10 px-4 py-2",
             sm: "h-9 rounded-md px-3",
-            lg: "h-12 rounded-md px-8 text-base",
+            lg: "h-12 rounded-md px-8 text-base tracking-wide",
             icon: "h-10 w-10",
         }
 
