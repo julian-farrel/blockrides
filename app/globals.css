@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 @theme {
-  --color-background: #121212;
-  --color-foreground: #ededed;
+  --color-background: #000000; /* Updated to Pure Black for Landing Page */
+  --color-foreground: #ffffff;
   
-  --color-primary: #10B981;
+  --color-primary: #10B981; /* Keeping Green for Dashboard logic */
   --color-primary-foreground: #ffffff;
   
   --color-secondary: #1F2937;
@@ -15,7 +15,7 @@
 
   --color-border: #374151;
   --color-input: #374151;
-  --color-ring: #10B981;
+  --color-ring: #A855F7; /* Changed ring to Purple */
   
   --radius-lg: 0.5rem;
   --radius-md: calc(var(--radius-lg) - 2px);
@@ -25,20 +25,19 @@
   
   @keyframes drive {
     0% { transform: translateX(-100%); }
-    100% { transform: translateX(200%); } /* Drive past the end */
+    100% { transform: translateX(200%); }
   }
 }
 
-/* Custom Utilities for Glassmorphism */
 @utility glass {
-  background: rgba(31, 41, 55, 0.7);
+  background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 @utility glass-card {
-  @apply glass rounded-xl shadow-lg;
+  @apply glass rounded-xl;
 }
 
 :root {
@@ -51,19 +50,4 @@ body {
   min-height: 100vh;
   margin: 0;
   overflow-x: hidden;
-}
-
-/* Hide scrollbar for cleaner UI */
-::-webkit-scrollbar {
-  width: 8px;
-}
-::-webkit-scrollbar-track {
-  background: #121212; 
-}
-::-webkit-scrollbar-thumb {
-  background: #374151; 
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #4B5563; 
 }
