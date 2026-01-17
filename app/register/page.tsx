@@ -1,16 +1,14 @@
-// app/onboarding/register/page.tsx
 'use client'
 
 import { useRouter, useSearchParams } from "next/navigation"
 import { usePrivy } from "@privy-io/react-auth"
 import { RegistrationForms } from "@/components/registration-forms"
-import { useUserRole } from "@/hooks/use-user-role"
 import { Suspense, useEffect } from "react"
 
 function RegisterContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    const { saveRole } = useUserRole()
+    // REMOVED: const { saveRole } = useUserRole() <- This caused the crash
     const { authenticated, ready } = usePrivy()
     
     // Get role from URL (e.g., ?role=driver)
@@ -20,7 +18,7 @@ function RegisterContent() {
     useEffect(() => {
         // Redirect if not logged in or invalid role
         if (ready && !authenticated) router.push('/')
-        if (ready && !role) router.push('/onboarding/role-selection')
+        if (ready && !role) router.push('/role-selection')
     }, [ready, authenticated, role, router])
 
     if (!ready || !role) return null
@@ -30,16 +28,10 @@ function RegisterContent() {
             <RegistrationForms 
                 role={role} 
                 onRegister={(data) => {
-                    console.log("Registered:", data)
+                    console.log("Registered successfully:", data)
                     
-                    // TODO: INTEGRATION POINT
-                    // 1. Call Smart Contract: registerDriver()
-                    // 2. Wait for transaction success
-                    
-                    // 3. Save role locally (simulating DB/Chain fetch)
-                    saveRole(role)
-                    
-                    // 4. Go to dashboard
+                    // The data is already saved to Supabase/Blockchain by RegistrationForms.
+                    // We simply redirect to the dashboard now.
                     router.push('/dashboard')
                 }} 
             />
