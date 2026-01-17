@@ -36,7 +36,7 @@ export default function Home() {
 
     // 4. Loading State
     if (!ready) {
-        return <div className="min-h-screen bg-black flex items-center justify-center text-purple-500">Loading Block Rides...</div>
+        return <div className="min-h-screen bg-black flex items-center justify-center text-zinc-500 animate-pulse">Loading Block Rides...</div>
     }
 
     // 5. Render Logic
@@ -51,7 +51,7 @@ export default function Home() {
         return (
             <div className="min-h-screen bg-black p-4">
                  {/* Temporary Logout for testing */}
-                <button onClick={logout} className="absolute top-4 right-4 text-xs text-gray-500 hover:text-white">Logout</button>
+                <button onClick={logout} className="absolute top-4 right-4 text-xs text-gray-500 hover:text-white transition-colors">Logout</button>
                 <RoleSelection onSelectRole={(selectedRole) => {
                     setRole(selectedRole)
                     setView('registration')
@@ -83,16 +83,16 @@ export default function Home() {
                 {/* Dashboard Header */}
                 <div className="flex justify-between items-center pb-6 border-b border-white/10">
                     <h1 className="text-2xl font-bold tracking-tight">
-                        block<span className="text-purple-500">rides</span>
-                        <span className="ml-4 text-sm font-normal text-gray-500 px-3 py-1 bg-white/5 rounded-full">
+                        block<span className="text-zinc-400">rides</span>
+                        <span className="ml-4 text-sm font-normal text-zinc-500 px-3 py-1 bg-white/5 rounded-full border border-white/5">
                             {role === 'driver' ? 'Driver Panel' : 'Passenger Hub'}
                         </span>
                     </h1>
                     <div className="flex items-center gap-4">
-                         <span className="text-sm text-gray-400 font-mono hidden md:inline-block">
+                         <span className="text-sm text-zinc-500 font-mono hidden md:inline-block">
                             {user?.wallet?.address?.slice(0, 6)}...{user?.wallet?.address?.slice(-4)}
                         </span>
-                        <button onClick={logout} className="text-sm bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full transition-colors">
+                        <button onClick={logout} className="text-sm bg-white/5 hover:bg-white/10 text-white px-4 py-2 rounded-full transition-colors border border-white/5">
                             Disconnect
                         </button>
                     </div>

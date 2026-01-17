@@ -42,7 +42,7 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
                                             <p className="text-sm text-zinc-500">~ $142.50 • 5.2 km</p>
                                         </div>
                                     </div>
-                                    <Button onClick={onAcceptRide} className="px-6">Accept</Button>
+                                    <Button onClick={onAcceptRide} className="px-6 bg-white text-black hover:bg-zinc-200 font-medium">Accept</Button>
                                 </div>
                                 <div className="space-y-3 text-sm pl-2 border-l border-zinc-800 ml-6">
                                     <div className="flex items-center gap-3 text-zinc-300">
@@ -64,13 +64,13 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
                         {/* Driver Controls */}
                         <div className="grid grid-cols-2 gap-4">
                             {rideStatus === 'Accepted' && (
-                                <Button onClick={onStartRide} className="col-span-2 h-16 text-xl shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+                                <Button onClick={onStartRide} className="col-span-2 h-16 text-xl shadow-[0_0_30px_rgba(255,255,255,0.2)] bg-white text-black hover:bg-zinc-200">
                                     <Navigation className="w-6 h-6 mr-3" />
                                     Start Trip
                                 </Button>
                             )}
                             {rideStatus === 'Started' && (
-                                <Button onClick={onCompleteRide} variant="outline" className="col-span-2 h-16 text-xl">
+                                <Button onClick={onCompleteRide} variant="outline" className="col-span-2 h-16 text-xl border-white/20 hover:bg-white/10 text-white">
                                     <MapPin className="w-6 h-6 mr-3" />
                                     Complete Trip
                                 </Button>
