@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { RideStatusPanel } from "@/components/ride-status-panel"
 import { MapPin, Navigation, Wallet, Clock, ArrowRight, Loader2, CheckCircle2, DollarSign } from "lucide-react"
 import { useWallets } from "@privy-io/react-auth"
 import { getContract } from "@/lib/web3"
@@ -20,7 +19,7 @@ export function PassengerView({ rideStatus, onRequestRide }: PassengerViewProps)
     const [pickup, setPickup] = useState("")
     const [dest, setDest] = useState("")
     const [price, setPrice] = useState("")
-    const [history, setHistory] = useState<any[]>([])
+    const [history, setHistory] = useState<any[]>([]) // Real data only
     const [loadingHistory, setLoadingHistory] = useState(true)
     const [isRequesting, setIsRequesting] = useState(false)
 
@@ -62,7 +61,7 @@ export function PassengerView({ rideStatus, onRequestRide }: PassengerViewProps)
         return () => clearInterval(interval)
     }, [fetchHistory])
 
-    // 1. Request Ride Transaction
+    // ACTION 1: Request Ride Transaction
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         const data = await getWeb3Contract()
@@ -72,11 +71,11 @@ export function PassengerView({ rideStatus, onRequestRide }: PassengerViewProps)
         try {
             const priceInWei = Web3.utils.toWei(price, 'ether')
             
+            // Sign & Send Request
             await data.contract.methods
                 .requestRide(pickup, dest, priceInWei)
                 .send({ from: data.address })
             
-            // Refresh list
             fetchHistory()
             onRequestRide(pickup, dest, price)
             setPickup("")
@@ -84,21 +83,23 @@ export function PassengerView({ rideStatus, onRequestRide }: PassengerViewProps)
             setPrice("")
         } catch (err) {
             console.error(err)
-            alert("Transaction failed!")
+            alert("Transaction failed! Please try again.")
         } finally {
             setIsRequesting(false)
         }
     }
 
-    // 2. Fund Ride Transaction (Escrow)
+    // ACTION 2: Fund Ride Transaction (Escrow)
     const handleFund = async (rideId: string, priceWei: string) => {
         const data = await getWeb3Contract()
         if (!data) return
 
+        if (!confirm(`Sign transaction to deposit ${Web3.utils.fromWei(priceWei, 'ether')} ETH into Escrow?`)) return;
+
         try {
             await data.contract.methods.fundRide(rideId).send({ 
                 from: data.address,
-                value: priceWei // Send ETH with the transaction
+                value: priceWei // Send exact ETH amount
             })
             fetchHistory()
         } catch (err) {
@@ -107,10 +108,12 @@ export function PassengerView({ rideStatus, onRequestRide }: PassengerViewProps)
         }
     }
 
-    // 3. Confirm Arrival Transaction
+    // ACTION 3: Confirm Arrival Transaction
     const handleConfirm = async (rideId: string) => {
         const data = await getWeb3Contract()
         if (!data) return
+
+        if (!confirm("Confirm arrival and release funds to driver?")) return;
 
         try {
             await data.contract.methods.confirmArrival(rideId).send({ from: data.address })
@@ -199,13 +202,13 @@ export function PassengerView({ rideStatus, onRequestRide }: PassengerViewProps)
                 <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-6 h-full backdrop-blur-sm overflow-y-auto max-h-[80vh]">
                     <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-6">
                         <Clock className="w-5 h-5 text-zinc-400" />
-                        Ride History
+                        Your Ride Status
                     </h3>
                     
                     <div className="space-y-4">
                         {loadingHistory ? <div className="text-zinc-500 text-sm">Loading blockchain data...</div> : history.map((ride) => {
                             const status = parseInt(ride.status)
-                            // status: 1 = Accepted, 4 = CompletedByDriver
+                            // status: 1 = Accepted (Needs Funding), 4 = CompletedByDriver (Needs Confirm)
                             
                             return (
                                 <div key={ride.id} className="group p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
@@ -228,23 +231,29 @@ export function PassengerView({ rideStatus, onRequestRide }: PassengerViewProps)
                                         </div>
                                     </div>
 
-                                    {/* Action Buttons */}
+                                    {/* Action Buttons based on Status */}
                                     {status === 1 && (
-                                        <Button 
-                                            onClick={() => handleFund(ride.id, ride.price)}
-                                            className="w-full mt-3 h-9 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
-                                        >
-                                            <DollarSign className="w-3 h-3 mr-1" /> Fund Escrow
-                                        </Button>
+                                        <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                                            <p className="text-xs text-zinc-400 mb-2">Driver accepted. Please fund escrow.</p>
+                                            <Button 
+                                                onClick={() => handleFund(ride.id, ride.price)}
+                                                className="w-full h-9 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+                                            >
+                                                <DollarSign className="w-3 h-3 mr-1" /> Sign & Fund {Web3.utils.fromWei(ride.price, 'ether')} ETH
+                                            </Button>
+                                        </div>
                                     )}
 
                                     {status === 4 && (
-                                        <Button 
-                                            onClick={() => handleConfirm(ride.id)}
-                                            className="w-full mt-3 h-9 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
-                                        >
-                                            <CheckCircle2 className="w-3 h-3 mr-1" /> Confirm Arrival
-                                        </Button>
+                                        <div className="mt-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                                            <p className="text-xs text-zinc-400 mb-2">Ride finished. Confirm to release funds.</p>
+                                            <Button 
+                                                onClick={() => handleConfirm(ride.id)}
+                                                className="w-full h-9 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold"
+                                            >
+                                                <CheckCircle2 className="w-3 h-3 mr-1" /> Sign & Confirm Arrival
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
                             )

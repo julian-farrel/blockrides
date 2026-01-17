@@ -4,10 +4,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { usePrivy, useWallets } from "@privy-io/react-auth" // Added useWallets
+import { usePrivy, useWallets } from "@privy-io/react-auth"
 import { supabase } from "@/lib/supabase"
 import { Loader2 } from "lucide-react"
-import { getContract } from "@/lib/web3" // Added contract helper
+import { getContract } from "@/lib/web3"
 
 interface RegistrationFormsProps {
     role: 'driver' | 'passenger'
@@ -16,7 +16,7 @@ interface RegistrationFormsProps {
 
 export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) {
     const { user } = usePrivy()
-    const { wallets } = useWallets() // Get connected wallets
+    const { wallets } = useWallets()
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState<any>({
         name: '',
@@ -33,13 +33,13 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
         setIsSubmitting(true)
 
         try {
-            // --- STEP 1: Blockchain Transaction ---
+            // STEP 1: Sign Transaction (Drivers only)
             if (role === 'driver') {
-                await wallet.switchChain(11155111) // Switch to Sepolia
+                await wallet.switchChain(11155111) // Sepolia
                 const provider = await wallet.getEthereumProvider()
                 const contract = getContract(provider)
 
-                // Call Smart Contract: registerDriver(name, plate, vehicle, rate)
+                // Calls Smart Contract: registerDriver()
                 await contract.methods.registerDriver(
                     formData.name,
                     formData.plateNumber,
@@ -48,8 +48,7 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
                 ).send({ from: wallet.address })
             }
 
-            // --- STEP 2: Database Backup (Supabase) ---
-            // We still save to Supabase for easy login checks later
+            // STEP 2: Save to Database (Syncs local DB with Blockchain state)
             const { data: userData, error: userError } = await supabase
                 .from('users')
                 .insert({
@@ -74,7 +73,6 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
                 if (driverError) throw driverError
             }
 
-            // Success!
             onRegister(formData)
         } catch (error: any) {
             console.error("Registration failed:", error)
@@ -150,7 +148,7 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
                         )}
 
                         <Button type="submit" disabled={isSubmitting} className="w-full mt-4 h-11 text-base bg-white text-black hover:bg-zinc-200">
-                            {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : (role === 'driver' ? 'Register on Blockchain' : 'Create Profile')}
+                            {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : (role === 'driver' ? 'Sign & Register' : 'Create Profile')}
                         </Button>
                     </form>
                 </CardContent>

@@ -1,11 +1,8 @@
 import Web3 from 'web3'
 
-// 1. Smart Contract Configuration
-// TODO: Replace this with your actual Deployed Contract Address from Remix
+// TODO: Replace with your actual Deployed Contract Address from Remix
 export const CONTRACT_ADDRESS = "0xB2bF48fff5f8f0d6a37Bf0d6ce7B3703a16B2411"
 
-// 2. The ABI (Application Binary Interface)
-// This matches the Solidity code provided in the previous step.
 export const CONTRACT_ABI = [
 	{
 		"anonymous": false,
@@ -247,7 +244,6 @@ export const CONTRACT_ABI = [
 	}
 ] as const
 
-// 3. Helper to initialize the contract
 export const getContract = (provider: any) => {
     const web3 = new Web3(provider)
     return new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS)

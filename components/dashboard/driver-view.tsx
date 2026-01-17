@@ -54,7 +54,7 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
         return () => clearInterval(interval)
     }, [fetchJobs])
 
-    // 1. Accept Transaction
+    // ACTION 1: Accept Transaction
     const handleAccept = async (rideId: string) => {
         const data = await getWeb3Contract()
         if (!data) return
@@ -69,7 +69,7 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
         }
     }
 
-    // 2. Start Transaction
+    // ACTION 2: Start Transaction
     const handleStart = async () => {
         if (!activeJobId) return
         const data = await getWeb3Contract()
@@ -84,7 +84,7 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
         }
     }
 
-    // 3. Complete Transaction
+    // ACTION 3: Complete Transaction
     const handleComplete = async () => {
         if (!activeJobId) return
         const data = await getWeb3Contract()
@@ -150,7 +150,7 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
                                             onClick={() => handleAccept(job.id)}
                                             className="h-12 px-6 bg-white text-black hover:bg-zinc-200 font-semibold"
                                         >
-                                            Accept Ride
+                                            Accept & Sign
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -163,12 +163,12 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
                         <div className="grid grid-cols-2 gap-4">
                             {rideStatus === 'Accepted' && (
                                 <Button onClick={handleStart} className="col-span-2 h-20 text-xl font-bold bg-white text-black hover:bg-zinc-200">
-                                    <Navigation className="w-6 h-6 mr-3" /> Start Trip
+                                    <Navigation className="w-6 h-6 mr-3" /> Start Trip (Sign)
                                 </Button>
                             )}
                             {rideStatus === 'Started' && (
                                 <Button onClick={handleComplete} variant="outline" className="col-span-2 h-20 text-xl border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10">
-                                    <MapPin className="w-6 h-6 mr-3" /> Complete Trip
+                                    <MapPin className="w-6 h-6 mr-3" /> Complete Trip (Sign)
                                 </Button>
                             )}
                         </div>
