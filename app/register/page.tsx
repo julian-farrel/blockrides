@@ -9,17 +9,16 @@ function RegisterContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     
-    // FIX: Removed useUserRole() and saveRole() because they are handled in the form now
+    // FIX: Removed useUserRole() and saveRole() calls completely.
+    // The role is now saved directly to Supabase in the RegistrationForms component.
     const { authenticated, ready } = usePrivy()
     
-    // Get role from URL (e.g., ?role=driver)
     const roleParam = searchParams.get('role')
     const role = (roleParam === 'driver' || roleParam === 'passenger') ? roleParam : null
 
     useEffect(() => {
-        // Redirect if not logged in or invalid role
         if (ready && !authenticated) router.push('/')
-        if (ready && !role) router.push('/role-selection') // Ensure this route matches your folder structure
+        if (ready && !role) router.push('/onboarding/role-selection') 
     }, [ready, authenticated, role, router])
 
     if (!ready || !role) return null
@@ -30,7 +29,7 @@ function RegisterContent() {
                 role={role} 
                 onRegister={(data) => {
                     console.log("Registered successfully:", data)
-                    // Redirect to dashboard immediately after success
+                    // Simply redirect to dashboard
                     router.push('/dashboard')
                 }} 
             />
