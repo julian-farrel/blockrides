@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RideStatusPanel } from "@/components/ride-status-panel"
-import { Navigation, Wallet, TrendingUp, ShieldCheck, Clock, MapPin, Loader2 } from "lucide-react"
-import { usePrivy } from "@privy-io/react-auth"
-import { supabase } from "@/lib/supabase"
+import { Navigation, Wallet, MapPin } from "lucide-react"
+import { useWallets } from "@privy-io/react-auth"
+import { getContract } from "@/lib/web3"
+import Web3 from "web3"
 
 interface DriverViewProps {
     rideStatus: "Idle" | "Accepted" | "Started" | "Completed"
@@ -16,44 +17,87 @@ interface DriverViewProps {
 }
 
 export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRide }: DriverViewProps) {
-    const { user } = usePrivy()
+    const { wallets } = useWallets()
     const [jobs, setJobs] = useState<any[]>([])
+    const [activeJobId, setActiveJobId] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
 
-    // Fetch Available Jobs
-    useEffect(() => {
-        async function fetchJobs() {
-            // Find rides where status is 'Idle'
-            const { data } = await supabase
-                .from('rides')
-                .select('*')
-                .eq('status', 'Idle')
-                .order('created_at', { ascending: false })
+    const getWeb3Contract = async () => {
+        const wallet = wallets[0]
+        if (!wallet) return null
+        const provider = await wallet.getEthereumProvider()
+        return { contract: getContract(provider), address: wallet.address }
+    }
+
+    const fetchJobs = useCallback(async () => {
+        const data = await getWeb3Contract()
+        if (!data) return
+        
+        try {
+            // Get ALL rides
+            const allRides: any[] = await data.contract.methods.getAllRides().call()
             
-            if (data) setJobs(data)
+            // Filter active jobs (Status 0 = Requested)
+            const availableJobs = allRides.filter((r: any) => r.status == 0).reverse()
+            setJobs(availableJobs)
+        } catch (err) {
+            console.error(err)
+        } finally {
             setLoading(false)
         }
-        
+    }, [wallets])
+
+    // Poll for jobs
+    useEffect(() => {
         fetchJobs()
-        
-        // Setup simple polling or subscription could go here
         const interval = setInterval(fetchJobs, 5000)
         return () => clearInterval(interval)
-    }, [])
+    }, [fetchJobs])
 
+    // 1. Accept Transaction
     const handleAccept = async (rideId: string) => {
-        if (!user?.wallet?.address) return
-        
-        // Update ride in DB
-        await supabase
-            .from('rides')
-            .update({ 
-                status: 'Accepted',
-                driver_wallet: user.wallet.address 
-            })
-            .eq('id', rideId)
-            
-        onAcceptRide()
+        const data = await getWeb3Contract()
+        if (!data) return
+
+        try {
+            await data.contract.methods.acceptRide(rideId).send({ from: data.address })
+            setActiveJobId(rideId)
+            onAcceptRide()
+        } catch (err) {
+            console.error(err)
+            alert("Accept failed")
+        }
+    }
+
+    // 2. Start Transaction
+    const handleStart = async () => {
+        if (!activeJobId) return
+        const data = await getWeb3Contract()
+        if (!data) return
+
+        try {
+            await data.contract.methods.startRide(activeJobId).send({ from: data.address })
+            onStartRide()
+        } catch (err) {
+            console.error(err)
+            alert("Start failed")
+        }
+    }
+
+    // 3. Complete Transaction
+    const handleComplete = async () => {
+        if (!activeJobId) return
+        const data = await getWeb3Contract()
+        if (!data) return
+
+        try {
+            await data.contract.methods.completeRide(activeJobId).send({ from: data.address })
+            onCompleteRide()
+            setActiveJobId(null) // Reset active job
+        } catch (err) {
+            console.error(err)
+            alert("Complete failed")
+        }
     }
 
     return (
@@ -88,7 +132,9 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <h3 className="text-2xl font-bold text-white tracking-tight">{job.price} ETH</h3>
+                                                        <h3 className="text-2xl font-bold text-white tracking-tight">
+                                                            {Web3.utils.fromWei(job.price, 'ether')} ETH
+                                                        </h3>
                                                     </div>
                                                     <p className="text-sm text-zinc-400">Pickup: {job.pickup}</p>
                                                 </div>
@@ -116,12 +162,12 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
                         <RideStatusPanel status={rideStatus} />
                         <div className="grid grid-cols-2 gap-4">
                             {rideStatus === 'Accepted' && (
-                                <Button onClick={onStartRide} className="col-span-2 h-20 text-xl font-bold bg-white text-black hover:bg-zinc-200">
+                                <Button onClick={handleStart} className="col-span-2 h-20 text-xl font-bold bg-white text-black hover:bg-zinc-200">
                                     <Navigation className="w-6 h-6 mr-3" /> Start Trip
                                 </Button>
                             )}
                             {rideStatus === 'Started' && (
-                                <Button onClick={onCompleteRide} variant="outline" className="col-span-2 h-20 text-xl border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10">
+                                <Button onClick={handleComplete} variant="outline" className="col-span-2 h-20 text-xl border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10">
                                     <MapPin className="w-6 h-6 mr-3" /> Complete Trip
                                 </Button>
                             )}

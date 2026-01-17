@@ -4,9 +4,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { usePrivy } from "@privy-io/react-auth"
+import { usePrivy, useWallets } from "@privy-io/react-auth" // Added useWallets
 import { supabase } from "@/lib/supabase"
 import { Loader2 } from "lucide-react"
+import { getContract } from "@/lib/web3" // Added contract helper
 
 interface RegistrationFormsProps {
     role: 'driver' | 'passenger'
@@ -15,6 +16,7 @@ interface RegistrationFormsProps {
 
 export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) {
     const { user } = usePrivy()
+    const { wallets } = useWallets() // Get connected wallets
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState<any>({
         name: '',
@@ -25,16 +27,33 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!user?.wallet?.address) return
+        const wallet = wallets[0]
+        if (!wallet) return
         
         setIsSubmitting(true)
 
         try {
-            // 1. Insert into Users Table
+            // --- STEP 1: Blockchain Transaction ---
+            if (role === 'driver') {
+                await wallet.switchChain(11155111) // Switch to Sepolia
+                const provider = await wallet.getEthereumProvider()
+                const contract = getContract(provider)
+
+                // Call Smart Contract: registerDriver(name, plate, vehicle, rate)
+                await contract.methods.registerDriver(
+                    formData.name,
+                    formData.plateNumber,
+                    formData.vehicleType,
+                    formData.rateType
+                ).send({ from: wallet.address })
+            }
+
+            // --- STEP 2: Database Backup (Supabase) ---
+            // We still save to Supabase for easy login checks later
             const { data: userData, error: userError } = await supabase
                 .from('users')
                 .insert({
-                    wallet_address: user.wallet.address,
+                    wallet_address: user?.wallet?.address,
                     role: role,
                     name: formData.name
                 })
@@ -43,7 +62,6 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
 
             if (userError) throw userError
 
-            // 2. If Driver, insert into Drivers Table
             if (role === 'driver') {
                 const { error: driverError } = await supabase
                     .from('drivers')
@@ -53,7 +71,6 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
                         vehicle_type: formData.vehicleType,
                         rate_type: formData.rateType
                     })
-
                 if (driverError) throw driverError
             }
 
@@ -61,7 +78,7 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
             onRegister(formData)
         } catch (error: any) {
             console.error("Registration failed:", error)
-            alert("Error registering: " + error.message)
+            alert("Error registering: " + (error.message || error))
         } finally {
             setIsSubmitting(false)
         }
@@ -133,7 +150,7 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
                         )}
 
                         <Button type="submit" disabled={isSubmitting} className="w-full mt-4 h-11 text-base bg-white text-black hover:bg-zinc-200">
-                            {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : (role === 'driver' ? 'Complete Registration' : 'Create Account')}
+                            {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : (role === 'driver' ? 'Register on Blockchain' : 'Create Profile')}
                         </Button>
                     </form>
                 </CardContent>
