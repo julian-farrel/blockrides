@@ -8,7 +8,8 @@ import { Suspense, useEffect } from "react"
 function RegisterContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
-    // REMOVED: const { saveRole } = useUserRole() <- This caused the crash
+    
+    // FIX: Removed useUserRole() and saveRole() because they are handled in the form now
     const { authenticated, ready } = usePrivy()
     
     // Get role from URL (e.g., ?role=driver)
@@ -18,7 +19,7 @@ function RegisterContent() {
     useEffect(() => {
         // Redirect if not logged in or invalid role
         if (ready && !authenticated) router.push('/')
-        if (ready && !role) router.push('/role-selection')
+        if (ready && !role) router.push('/role-selection') // Ensure this route matches your folder structure
     }, [ready, authenticated, role, router])
 
     if (!ready || !role) return null
@@ -29,9 +30,7 @@ function RegisterContent() {
                 role={role} 
                 onRegister={(data) => {
                     console.log("Registered successfully:", data)
-                    
-                    // The data is already saved to Supabase/Blockchain by RegistrationForms.
-                    // We simply redirect to the dashboard now.
+                    // Redirect to dashboard immediately after success
                     router.push('/dashboard')
                 }} 
             />
@@ -41,7 +40,6 @@ function RegisterContent() {
 
 export default function RegisterPage() {
     return (
-        // Suspense is required when using useSearchParams in Next.js App Router
         <Suspense fallback={<div className="text-white">Loading...</div>}>
             <RegisterContent />
         </Suspense>
