@@ -1,28 +1,42 @@
-// hooks/use-user-role.ts
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePrivy } from '@privy-io/react-auth'
+import { supabase } from '@/lib/supabase'
 
 export function useUserRole() {
+  const { user, ready } = usePrivy()
   const [role, setRole] = useState<'driver' | 'passenger' | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // In the final exam submission, this is where you would call:
-    // contract.methods.getDriver(address).call()
-    
-    // For now, we use localStorage to simulate the "database/chain"
-    const storedRole = localStorage.getItem('blockrides_role') as 'driver' | 'passenger' | null
-    if (storedRole) {
-      setRole(storedRole)
+    async function fetchRole() {
+      if (!ready) return
+      
+      if (!user?.wallet?.address) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('wallet_address', user.wallet.address)
+          .single()
+
+        if (data) {
+          setRole(data.role as 'driver' | 'passenger')
+        }
+      } catch (error) {
+        console.error('Error fetching role:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
-  }, [])
 
-  const saveRole = (newRole: 'driver' | 'passenger') => {
-    localStorage.setItem('blockrides_role', newRole)
-    setRole(newRole)
-  }
+    fetchRole()
+  }, [ready, user?.wallet?.address])
 
-  return { role, saveRole, loading }
+  return { role, loading } // We no longer export saveRole, registration handles that
 }

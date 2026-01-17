@@ -4,6 +4,9 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { usePrivy } from "@privy-io/react-auth"
+import { supabase } from "@/lib/supabase"
+import { Loader2 } from "lucide-react"
 
 interface RegistrationFormsProps {
     role: 'driver' | 'passenger'
@@ -11,6 +14,8 @@ interface RegistrationFormsProps {
 }
 
 export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) {
+    const { user } = usePrivy()
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [formData, setFormData] = useState<any>({
         name: '',
         plateNumber: '',
@@ -18,9 +23,48 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
         rateType: 'Per KM'
     })
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        onRegister(formData)
+        if (!user?.wallet?.address) return
+        
+        setIsSubmitting(true)
+
+        try {
+            // 1. Insert into Users Table
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .insert({
+                    wallet_address: user.wallet.address,
+                    role: role,
+                    name: formData.name
+                })
+                .select()
+                .single()
+
+            if (userError) throw userError
+
+            // 2. If Driver, insert into Drivers Table
+            if (role === 'driver') {
+                const { error: driverError } = await supabase
+                    .from('drivers')
+                    .insert({
+                        user_id: userData.id,
+                        plate_number: formData.plateNumber,
+                        vehicle_type: formData.vehicleType,
+                        rate_type: formData.rateType
+                    })
+
+                if (driverError) throw driverError
+            }
+
+            // Success!
+            onRegister(formData)
+        } catch (error: any) {
+            console.error("Registration failed:", error)
+            alert("Error registering: " + error.message)
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     return (
@@ -88,8 +132,8 @@ export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) 
                             </>
                         )}
 
-                        <Button type="submit" className="w-full mt-4 h-11 text-base bg-white text-black hover:bg-zinc-200">
-                            {role === 'driver' ? 'Complete Registration' : 'Create Account'}
+                        <Button type="submit" disabled={isSubmitting} className="w-full mt-4 h-11 text-base bg-white text-black hover:bg-zinc-200">
+                            {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : (role === 'driver' ? 'Complete Registration' : 'Create Account')}
                         </Button>
                     </form>
                 </CardContent>
