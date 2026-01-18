@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RideStatusPanel } from "@/components/ride-status-panel"
-import { Navigation, Wallet, MapPin } from "lucide-react"
+import { Navigation, Wallet, MapPin, Clock, CheckCircle2 } from "lucide-react"
 import { useWallets } from "@privy-io/react-auth"
 import { getContract } from "@/lib/web3"
 import { supabase } from "@/lib/supabase"
@@ -20,6 +20,8 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
     const { wallets } = useWallets()
     const [jobs, setJobs] = useState<any[]>([])
     const [activeJob, setActiveJob] = useState<any>(null)
+    const [history, setHistory] = useState<any[]>([])
+    const [earnings, setEarnings] = useState<number>(0)
     const [loading, setLoading] = useState(true)
 
     const getWeb3Contract = async () => {
@@ -29,13 +31,12 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
         return { contract: getContract(provider), address: wallet.address }
     }
 
-    // Fetch Data from Supabase (Persistence Layer)
+    // Fetch Data from Supabase
     const fetchData = useCallback(async () => {
         const wallet = wallets[0]
         if (!wallet) return
 
-        // 1. Check if I (the driver) already have an active job
-        // Looks for Accepted or Started rides where driver_wallet = me
+        // 1. Check for Active Job
         const { data: activeData } = await supabase
             .from('rides')
             .select('*')
@@ -45,17 +46,15 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
 
         if (activeData) {
             setActiveJob(activeData)
-            // Sync the UI State
             if (activeData.status === 'Accepted') onAcceptRide()
             if (activeData.status === 'Started') onStartRide()
         } else {
-            // If we finished the job (Completed), clear active job
             if (rideStatus === 'Completed') {
                 setActiveJob(null)
             }
         }
 
-        // 2. Fetch Available Jobs (Status = Requested)
+        // 2. Fetch Available Jobs
         const { data: jobsData } = await supabase
             .from('rides')
             .select('*')
@@ -63,46 +62,59 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
             .order('created_at', { ascending: false })
 
         if (jobsData) setJobs(jobsData)
+
+        // 3. Fetch History & Earnings (New Logic)
+        const { data: historyData } = await supabase
+            .from('rides')
+            .select('*')
+            .eq('driver_wallet', wallet.address)
+            .in('status', ['Completed', 'Finalized']) // Fetch finished rides
+            .order('created_at', { ascending: false })
+
+        if (historyData) {
+            setHistory(historyData)
+            
+            // Calculate Total Earnings (Only count 'Finalized' rides where funds are released)
+            const totalEarned = historyData
+                .filter((r: any) => r.status === 'Finalized')
+                .reduce((sum: number, r: any) => sum + Number(r.price), 0)
+            
+            setEarnings(totalEarned)
+        }
+
         setLoading(false)
     }, [wallets, rideStatus])
 
-    // Poll for updates every 3 seconds
     useEffect(() => {
         fetchData()
         const interval = setInterval(fetchData, 3000)
         return () => clearInterval(interval)
     }, [fetchData])
 
-    // --- DRIVER ACTION 1: Accept ---
     const handleAccept = async (rideId: string, dbId: number) => {
         const data = await getWeb3Contract()
         if (!data) return
         try {
-            // A. Blockchain
             await data.contract.methods.acceptRide(rideId).send({ from: data.address })
-            
-            // B. Database (Lock the ride for this driver)
             await supabase.from('rides').update({ 
                 status: 'Accepted', 
                 driver_wallet: data.address 
             }).eq('id', dbId)
 
             onAcceptRide()
-            fetchData() // Immediate refresh
+            fetchData()
         } catch (err) {
             console.error(err)
             alert("Accept failed")
         }
     }
 
-    // --- DRIVER ACTION 2: Start ---
     const handleStart = async () => {
         if (!activeJob) return
         const data = await getWeb3Contract()
         if (!data) return
         try {
             await data.contract.methods.startRide(activeJob.blockchain_id).send({ from: data.address })
-            
             await supabase.from('rides').update({ status: 'Started' }).eq('id', activeJob.id)
             
             onStartRide()
@@ -113,14 +125,12 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
         }
     }
 
-    // --- DRIVER ACTION 3: Complete ---
     const handleComplete = async () => {
         if (!activeJob) return
         const data = await getWeb3Contract()
         if (!data) return
         try {
             await data.contract.methods.completeRide(activeJob.blockchain_id).send({ from: data.address })
-            
             await supabase.from('rides').update({ status: 'Completed' }).eq('id', activeJob.id)
             
             onCompleteRide()
@@ -134,7 +144,7 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in duration-700">
-            {/* Left Column */}
+            {/* LEFT COLUMN: Job Operations */}
             <div className="lg:col-span-8 space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
@@ -208,18 +218,61 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
                 )}
             </div>
 
-            {/* Right Column: Earnings */}
+            {/* RIGHT COLUMN: Earnings & History */}
             <div className="lg:col-span-4 space-y-6">
+                
+                {/* 1. Earnings Card */}
                 <Card className="bg-gradient-to-br from-zinc-900 to-black border-white/10 relative overflow-hidden shadow-xl">
                      <CardHeader className="pb-2">
                         <CardTitle className="flex items-center gap-2 text-xs font-bold text-zinc-400 uppercase tracking-widest">
-                            <Wallet className="w-3 h-3 text-white" /> Weekly Earnings
+                            <Wallet className="w-3 h-3 text-white" /> Total Earnings
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-4xl font-bold text-white mb-1 tracking-tight">0.00 <span className="text-xl text-zinc-500">ETH</span></div>
+                        <div className="text-4xl font-bold text-white mb-1 tracking-tight">
+                            {earnings.toFixed(4)} <span className="text-xl text-zinc-500">ETH</span>
+                        </div>
                     </CardContent>
                 </Card>
+
+                {/* 2. Driver History List */}
+                <div className="bg-zinc-900/30 border border-white/5 rounded-2xl p-6 h-[50vh] overflow-y-auto backdrop-blur-sm">
+                    <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-6">
+                        <Clock className="w-5 h-5 text-zinc-400" />
+                        Ride History
+                    </h3>
+                    
+                    <div className="space-y-4">
+                        {history.length === 0 && <p className="text-zinc-500 text-sm">No completed rides yet.</p>}
+                        
+                        {history.map((ride) => (
+                            <div key={ride.id} className="group p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex items-center gap-2 text-zinc-300">
+                                        <MapPin className="w-4 h-4 text-white" />
+                                        <span className="font-medium text-sm truncate max-w-[150px]">{ride.destination}</span>
+                                    </div>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                        ride.status === 'Finalized' 
+                                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                            : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                                    }`}>
+                                        {ride.status === 'Finalized' ? 'Paid' : 'Pending'}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-end">
+                                    <div className="text-xs text-zinc-500 flex items-center gap-1">
+                                        <Clock className="w-3 h-3" /> {new Date(ride.created_at).toLocaleDateString()}
+                                    </div>
+                                    <div className="text-sm font-bold text-white font-mono">
+                                        + {ride.price} ETH
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
             </div>
         </div>
     )
