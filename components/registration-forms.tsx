@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from "react"
-import { usePrivy } from "@privy-io/react-auth"
+import { usePrivy, useWallets } from "@privy-io/react-auth" // 1. Import useWallets
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
+import { getContract } from "@/lib/web3" // 2. Import Contract Helper
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -11,23 +12,38 @@ import { User, Car, CreditCard, Loader2, Coins } from "lucide-react"
 
 export function RegistrationForms({ role, onRegister }: { role: 'driver' | 'passenger', onRegister: (data: any) => void }) {
     const { user } = usePrivy()
+    const { wallets } = useWallets()
     const router = useRouter()
     const [loading, setLoading] = useState(false)
 
     const [name, setName] = useState("")
     const [plateNumber, setPlateNumber] = useState("")
     const [vehicleType, setVehicleType] = useState("")
-    const [tariff, setTariff] = useState("") // New Tariff State
+    const [tariff, setTariff] = useState("") 
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!user?.wallet?.address) return
+        const wallet = wallets[0]
+        if (!wallet || !user?.wallet?.address) return
 
         setLoading(true)
         try {
             const walletAddress = user.wallet.address
 
-            // 1. Create/Update User Record (Common for both roles)
+            // --- STEP 1: BLOCKCHAIN TRANSACTION (DRIVER ONLY) ---
+            if (role === 'driver') {
+                const provider = await wallet.getEthereumProvider()
+                const contract = getContract(provider)
+
+                await contract.methods
+                    .registerDriver(name, plateNumber, vehicleType, "Per Mile")
+                    .send({ from: walletAddress })
+                
+                console.log("Blockchain registration successful")
+            }
+
+            // --- STEP 2: SUPABASE DATABASE ---
+            // Create/Update User Record
             const { data: userData, error: userError } = await supabase
                 .from('users')
                 .upsert({
@@ -40,16 +56,16 @@ export function RegistrationForms({ role, onRegister }: { role: 'driver' | 'pass
 
             if (userError) throw userError
 
-            // 2. If Driver, create Driver Record with Tariff
+            // If Driver, create Driver Record with Tariff in DB
             if (role === 'driver') {
                 const { error: driverError } = await supabase
                     .from('drivers')
                     .upsert({
-                        user_id: userData.id,
+                        user_id: userData.id, 
                         plate_number: plateNumber,
                         vehicle_type: vehicleType,
                         rate_type: 'Per Mile',
-                        tariff_per_mile: parseFloat(tariff)
+                        tariff_per_mile: parseFloat(tariff) 
                     })
 
                 if (driverError) throw driverError
@@ -59,7 +75,7 @@ export function RegistrationForms({ role, onRegister }: { role: 'driver' | 'pass
             onRegister({ name, role, tariff })
         } catch (error: any) {
             console.error("Registration failed:", error)
-            alert("Registration failed: " + error.message)
+            alert("Registration failed: " + (error.message || error))
         } finally {
             setLoading(false)
         }
@@ -79,7 +95,6 @@ export function RegistrationForms({ role, onRegister }: { role: 'driver' | 'pass
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         
-                        {/* 1. NAME FIELD (Visible for Driver to see/set their name) */}
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
                                 <User className="w-4 h-4" /> Full Name
@@ -93,7 +108,6 @@ export function RegistrationForms({ role, onRegister }: { role: 'driver' | 'pass
                             />
                         </div>
 
-                        {/* DRIVER SPECIFIC FIELDS */}
                         {role === 'driver' && (
                             <>
                                 <div className="space-y-2">
@@ -122,7 +136,6 @@ export function RegistrationForms({ role, onRegister }: { role: 'driver' | 'pass
                                     />
                                 </div>
 
-                                {/* NEW: TARIFF PER MILE */}
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
                                         <Coins className="w-4 h-4" /> Tariff (ETH per Mile)
