@@ -1,9 +1,61 @@
 import Web3 from 'web3'
 
 // TODO: Replace with your actual Deployed Contract Address from Remix
-export const CONTRACT_ADDRESS = "0xcb4e70bA47171B261D4D6070d241AE0F0b7CA23F"
+export const CONTRACT_ADDRESS = "0xBcF1bfC3C27806c2a4A462f8089847Da06afDF32"
 
 export const CONTRACT_ABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_rideId",
+				"type": "uint256"
+			}
+		],
+		"name": "acceptRide",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_rideId",
+				"type": "uint256"
+			}
+		],
+		"name": "cancelRide",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_rideId",
+				"type": "uint256"
+			}
+		],
+		"name": "completeRide",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_rideId",
+				"type": "uint256"
+			}
+		],
+		"name": "confirmArrival",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
 	{
 		"anonymous": false,
 		"inputs": [
@@ -22,6 +74,57 @@ export const CONTRACT_ABI = [
 		],
 		"name": "DriverRegistered",
 		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_plateNumber",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_vehicleType",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_rateType",
+				"type": "string"
+			}
+		],
+		"name": "registerDriver",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_pickup",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_destination",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_price",
+				"type": "uint256"
+			}
+		],
+		"name": "requestRide",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -151,46 +254,7 @@ export const CONTRACT_ABI = [
 				"type": "uint256"
 			}
 		],
-		"name": "acceptRide",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_rideId",
-				"type": "uint256"
-			}
-		],
-		"name": "cancelRide",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_rideId",
-				"type": "uint256"
-			}
-		],
-		"name": "completeRide",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_rideId",
-				"type": "uint256"
-			}
-		],
-		"name": "confirmArrival",
+		"name": "startRide",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -297,57 +361,6 @@ export const CONTRACT_ABI = [
 	{
 		"inputs": [
 			{
-				"internalType": "string",
-				"name": "_name",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_plateNumber",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_vehicleType",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_rateType",
-				"type": "string"
-			}
-		],
-		"name": "registerDriver",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_pickup",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_destination",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_price",
-				"type": "uint256"
-			}
-		],
-		"name": "requestRide",
-		"outputs": [],
-		"stateMutability": "payable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
@@ -397,19 +410,6 @@ export const CONTRACT_ABI = [
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "_rideId",
-				"type": "uint256"
-			}
-		],
-		"name": "startRide",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ] as const
