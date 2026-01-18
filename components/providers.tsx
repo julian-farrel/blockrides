@@ -7,17 +7,20 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <PrivyProvider
       appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''}
       config={{
-        // Customize Privy's appearance
+        // 1. BRANDING CONFIGURATION
         appearance: {
           theme: 'dark',
           accentColor: '#676FFF',
-          logo: 'https://your-logo-url', // Optional
+          logo: '/logo.png', // <--- Points to public/logo.png
+          landingHeader: 'Log in to BlockRides', 
         },
-        // Create embedded wallets for users who don't have a wallet
+        
+        // 2. WALLET CONFIGURATION
         embeddedWallets: {
           createOnLogin: 'users-without-wallets',
-          // FIX: Removed the 'ethereum' wrapper here which caused the build error
         },
+
+        // 3. CHAIN CONFIGURATION (Sepolia)
         defaultChain: {
           id: 11155111,
           name: 'Sepolia',
