@@ -1,7 +1,7 @@
 import Web3 from 'web3'
 
 // TODO: Replace with your actual Deployed Contract Address from Remix
-export const CONTRACT_ADDRESS = "0xBcF1bfC3C27806c2a4A462f8089847Da06afDF32"
+export const CONTRACT_ADDRESS = "0xDEc72057C6Da530D64C053E459825e4D01Fc0744"
 
 export const CONTRACT_ABI = [
 	{
