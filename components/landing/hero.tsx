@@ -22,16 +22,16 @@ export function Hero({ onConnect }: HeroProps) {
 
                 {/* Headline */}
                 <h1 className="text-6xl md:text-8xl font-bold tracking-tighter text-white mb-8 leading-[1.1] animate-in fade-in slide-in-from-bottom-6 duration-700 delay-100 drop-shadow-2xl">
-                    The Future of <br />
+                    Ride Sharing but <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-zinc-600">
-                        Ride Sharing
+                        Decentralized
                     </span>
                 </h1>
 
                 {/* Subtext */}
                 <p className="text-lg md:text-xl text-zinc-400 max-w-2xl mb-12 leading-relaxed animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
                     Experience truly decentralized ride sharing powered by blockchain. 
-                    No middleman. Direct connections. Fair pricing.
+                    No middleman. Direct connections.
                 </p>
 
                 {/* Buttons */}

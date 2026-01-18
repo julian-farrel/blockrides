@@ -1,6 +1,6 @@
 import Web3 from 'web3'
 
-export const CONTRACT_ADDRESS = "0x2132bD576B01d3824683803aAf7a312a815d7344"
+export const CONTRACT_ADDRESS = "0x957Ba493A35b5d3F63c26a7A914A4CF7485B8C2f"
 
 export const CONTRACT_ABI = [
 	{
