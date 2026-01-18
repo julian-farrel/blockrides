@@ -9,7 +9,7 @@ export default function RoleSelectionPage() {
     const router = useRouter()
     const { authenticated, ready, logout } = usePrivy()
 
-    // Protect the route
+    // Protect the route: Redirect to home if not authenticated
     useEffect(() => {
         if (ready && !authenticated) {
             router.push('/')
@@ -20,11 +20,15 @@ export default function RoleSelectionPage() {
 
     return (
         <div className="min-h-screen bg-black p-4 relative">
+             {/* ONLY 'Disconnect' button remains in the top right */}
              <button 
-                onClick={() => { logout(); router.push('/'); }} 
-                className="absolute top-4 right-4 text-xs text-gray-500 hover:text-white transition-colors"
+                onClick={async () => { 
+                    await logout(); 
+                    router.push('/'); 
+                }} 
+                className="absolute top-4 right-4 text-xs text-zinc-500 hover:text-white transition-colors border border-zinc-800 bg-zinc-900/50 px-3 py-1.5 rounded-full"
             >
-                Logout
+                Disconnect
             </button>
             
             <RoleSelection onSelectRole={(selectedRole) => {
