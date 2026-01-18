@@ -17,7 +17,6 @@ export function LandingPage({ onConnect }: LandingPageProps) {
                 <Hero onConnect={onConnect} />
             </main>
 
-            {/* Footer is optional based on your image, but good to keep for links */}
             <div className="border-t border-white/5">
                 <Footer />
             </div>

@@ -68,7 +68,7 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
             .from('rides')
             .select('*')
             .eq('driver_wallet', wallet.address)
-            .in('status', ['Completed', 'Finalized']) // Fetch finished rides
+            .in('status', ['Completed', 'Finalized'])
             .order('created_at', { ascending: false })
 
         if (historyData) {

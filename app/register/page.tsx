@@ -9,8 +9,6 @@ function RegisterContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     
-    // FIX: Removed useUserRole() and saveRole() calls completely.
-    // The role is now saved directly to Supabase in the RegistrationForms component.
     const { authenticated, ready } = usePrivy()
     
     const roleParam = searchParams.get('role')
@@ -29,7 +27,6 @@ function RegisterContent() {
                 role={role} 
                 onRegister={(data) => {
                     console.log("Registered successfully:", data)
-                    // Simply redirect to dashboard
                     router.push('/dashboard')
                 }} 
             />

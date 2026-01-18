@@ -7,11 +7,11 @@
   --color-primary: #ffffff;
   --color-primary-foreground: #000000;
   
-  --color-secondary: #27272a; /* Zinc-800 */
+  --color-secondary: #27272a;
   --color-secondary-foreground: #ffffff;
   
   --color-muted: #27272a; 
-  --color-muted-foreground: #a1a1aa; /* Zinc-400 */
+  --color-muted-foreground: #a1a1aa;
 
   --color-border: #27272a;
   --color-input: #27272a;
@@ -32,7 +32,6 @@
   }
 }
 
-/* Glassmorphism Utilities - Monochrome Edition */
 @utility glass {
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(16px);
@@ -44,7 +43,6 @@
   @apply glass rounded-xl shadow-2xl;
 }
 
-/* Global Reset */
 :root {
   background-color: #000000;
   color: #ffffff;
@@ -59,7 +57,6 @@ body {
   selection-color: #000000;
 }
 
-/* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 6px;
 }

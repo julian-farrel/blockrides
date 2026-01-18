@@ -24,7 +24,6 @@ export default function DashboardRedirect() {
             } else if (role === 'passenger') {
                 router.push('/dashboard/passenger')
             } else {
-                // No role found, send to onboarding
                 router.push('/onboarding/role-selection')
             }
         }

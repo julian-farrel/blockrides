@@ -38,5 +38,5 @@ export function useUserRole() {
     fetchRole()
   }, [ready, user?.wallet?.address])
 
-  return { role, loading } // We no longer export saveRole, registration handles that
+  return { role, loading }
 }

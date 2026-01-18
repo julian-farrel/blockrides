@@ -64,12 +64,10 @@ export function PassengerView({ rideStatus, onRequestRide }: PassengerViewProps)
             const priceInWei = Web3.utils.toWei(price, 'ether')
             
             // A. Blockchain Transaction
-            // FIX: Added ': any' type to receipt to remove the red line
             const receipt: any = await data.contract.methods
                 .requestRide(pickup, dest, priceInWei)
                 .send({ from: data.address, value: priceInWei })
             
-            // Now TypeScript will allow accessing .events.RideRequested
             const rideId = receipt.events.RideRequested.returnValues.rideId.toString()
 
             // B. Database Sync (Save to Supabase so Driver sees it)

@@ -11,16 +11,13 @@ export default function DriverDashboardPage() {
     const { role, loading } = useUserRole()
     const router = useRouter()
     
-    // Driver-specific state
     const [rideStatus, setRideStatus] = useState<'Idle' | 'Accepted' | 'Started' | 'Completed'>('Idle')
-
     useEffect(() => {
         if (!ready) return
         if (!authenticated) {
             router.push('/')
             return
         }
-        // Security: If user is loaded but is NOT a driver, kick them out
         if (!loading && role !== 'driver') {
             router.push('/dashboard') 
         }
@@ -62,12 +59,10 @@ export default function DriverDashboardPage() {
                 <DriverView 
                     rideStatus={rideStatus}
                     onAcceptRide={() => {
-                        // TODO: Call Smart Contract: acceptRide()
                         setRideStatus('Accepted')
                     }}
                     onStartRide={() => setRideStatus('Started')}
                     onCompleteRide={() => {
-                        // TODO: Call Smart Contract: completeRide()
                         setRideStatus('Completed')
                     }}
                 />

@@ -11,16 +11,13 @@ export default function PassengerDashboardPage() {
     const { role, loading } = useUserRole()
     const router = useRouter()
     
-    // Passenger-specific state
     const [rideStatus, setRideStatus] = useState<'Idle' | 'Finding Pilot' | 'Accepted' | 'Started' | 'Completed'>('Idle')
-
     useEffect(() => {
         if (!ready) return
         if (!authenticated) {
             router.push('/')
             return
         }
-        // Security: If user is loaded but is NOT a passenger, kick them out
         if (!loading && role !== 'passenger') {
             router.push('/dashboard')
         }
@@ -63,7 +60,6 @@ export default function PassengerDashboardPage() {
                     rideStatus={rideStatus}
                     onRequestRide={(pickup, dest, price) => {
                         console.log("Requesting Ride:", pickup, dest, price)
-                        // TODO: Call Smart Contract: requestRide()
                         setRideStatus('Finding Pilot') 
                     }}
                 />

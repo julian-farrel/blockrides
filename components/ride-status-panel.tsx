@@ -14,7 +14,6 @@ export function RideStatusPanel({ status, vehicleType = "Car", pickupFrom, desti
     return (
         <Card className="glass-card border-t-white border-t-2 w-full overflow-hidden relative shadow-[0_0_40px_rgba(0,0,0,0.5)]">
             
-            {/* Minimalist Ambient Glow */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-white/5 blur-[80px] pointer-events-none" />
 
             <CardHeader className="relative">

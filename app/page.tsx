@@ -1,4 +1,3 @@
-// app/page.tsx
 'use client'
 
 import { useEffect } from "react"
@@ -17,10 +16,8 @@ export default function Home() {
 
         if (authenticated) {
             if (role) {
-                // If they have a role, go to dashboard
                 router.push('/dashboard')
             } else {
-                // If logged in but no role, go to onboarding
                 router.push('/role-selection')
             }
         }
@@ -30,6 +27,5 @@ export default function Home() {
         return <div className="min-h-screen bg-black flex items-center justify-center text-zinc-500 animate-pulse">Loading Block Rides...</div>
     }
 
-    // Only show landing if not authenticated
     return <LandingPage onConnect={login} />
 }

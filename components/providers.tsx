@@ -3,11 +3,10 @@
 import { PrivyProvider } from '@privy-io/react-auth'
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // Construct the Infura RPC URL
   const INFURA_ID = process.env.NEXT_PUBLIC_INFURA_API_KEY
   const RPC_URL = INFURA_ID 
     ? `https://sepolia.infura.io/v3/${INFURA_ID}`
-    : 'https://rpc.sepolia.org' // Fallback if key is missing
+    : 'https://rpc.sepolia.org'
 
   return (
     <PrivyProvider
@@ -33,10 +32,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
           },
           rpcUrls: {
             default: {
-              http: [RPC_URL], // <--- UPDATED TO USE INFURA
+              http: [RPC_URL],
             },
             public: {
-              http: [RPC_URL], // <--- UPDATED TO USE INFURA
+              http: [RPC_URL],
             },
           },
           blockExplorers: {
@@ -59,10 +58,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             },
             rpcUrls: {
               default: {
-                http: [RPC_URL], // <--- UPDATED TO USE INFURA
+                http: [RPC_URL],
               },
               public: {
-                http: [RPC_URL], // <--- UPDATED TO USE INFURA
+                http: [RPC_URL],
               },
             },
             blockExplorers: {

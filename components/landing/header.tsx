@@ -17,7 +17,7 @@ export function Header({ onConnect }: { onConnect: () => void }) {
                             src="/logo.png" 
                             alt="BlockRides Logo" 
                             fill 
-                            className="object-cover p-0.5" // object-cover fills the rounded shape
+                            className="object-cover p-0.5"
                             priority
                         />
                     </div>
