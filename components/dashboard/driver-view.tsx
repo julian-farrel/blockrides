@@ -36,6 +36,19 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
         try {
             const allRides: any[] = await data.contract.methods.getAllRides().call()
             
+            // --- FIX START: Auto-detect Active Job ---
+            // We look for a job where YOU are the driver and status is Accepted (1) or Started (2)
+            const myActiveJob = allRides.find((r: any) => 
+                r.driver.toLowerCase() === data.address.toLowerCase() && 
+                (r.status == 1 || r.status == 2)
+            )
+
+            if (myActiveJob) {
+                console.log("Found active job:", myActiveJob.id)
+                setActiveJobId(myActiveJob.id)
+            }
+            // --- FIX END ---
+
             // Filter: Status 0 (Requested) means it is FUNDED and ready for pickup
             const availableJobs = allRides.filter((r: any) => r.status == 0).reverse()
             setJobs(availableJobs)
@@ -66,7 +79,12 @@ export function DriverView({ rideStatus, onAcceptRide, onStartRide, onCompleteRi
     }
 
     const handleStart = async () => {
-        if (!activeJobId) return
+        console.log("Attempting to start trip with ID:", activeJobId) // Debug log
+        if (!activeJobId) {
+            alert("Error: No active job ID found. Please refresh.")
+            return
+        }
+
         const data = await getWeb3Contract()
         if (!data) return
         try {
