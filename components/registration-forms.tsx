@@ -1,154 +1,152 @@
 'use client'
 
 import { useState } from "react"
+import { usePrivy } from "@privy-io/react-auth"
+import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { usePrivy, useWallets } from "@privy-io/react-auth"
-import { supabase } from "@/lib/supabase"
-import { Loader2 } from "lucide-react"
-import { getContract } from "@/lib/web3"
+import { User, Car, CreditCard, Loader2, Coins } from "lucide-react"
 
-interface RegistrationFormsProps {
-    role: 'driver' | 'passenger'
-    onRegister: (data: any) => void
-}
-
-export function RegistrationForms({ role, onRegister }: RegistrationFormsProps) {
+export function RegistrationForms({ role, onRegister }: { role: 'driver' | 'passenger', onRegister: (data: any) => void }) {
     const { user } = usePrivy()
-    const { wallets } = useWallets()
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [formData, setFormData] = useState<any>({
-        name: '',
-        plateNumber: '',
-        vehicleType: 'Car',
-        rateType: 'Per KM'
-    })
+    const router = useRouter()
+    const [loading, setLoading] = useState(false)
+
+    const [name, setName] = useState("")
+    const [plateNumber, setPlateNumber] = useState("")
+    const [vehicleType, setVehicleType] = useState("")
+    const [tariff, setTariff] = useState("") // New Tariff State
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        const wallet = wallets[0]
-        if (!wallet) return
-        
-        setIsSubmitting(true)
+        if (!user?.wallet?.address) return
 
+        setLoading(true)
         try {
-            // STEP 1: Sign Transaction (Drivers only)
-            if (role === 'driver') {
-                await wallet.switchChain(11155111) // Sepolia
-                const provider = await wallet.getEthereumProvider()
-                const contract = getContract(provider)
+            const walletAddress = user.wallet.address
 
-                // Calls Smart Contract: registerDriver()
-                await contract.methods.registerDriver(
-                    formData.name,
-                    formData.plateNumber,
-                    formData.vehicleType,
-                    formData.rateType
-                ).send({ from: wallet.address })
-            }
-
-            // STEP 2: Save to Database (Syncs local DB with Blockchain state)
+            // 1. Create/Update User Record (Common for both roles)
             const { data: userData, error: userError } = await supabase
                 .from('users')
-                .insert({
-                    wallet_address: user?.wallet?.address,
+                .upsert({
+                    wallet_address: walletAddress,
                     role: role,
-                    name: formData.name
-                })
+                    name: name,
+                }, { onConflict: 'wallet_address' })
                 .select()
                 .single()
 
             if (userError) throw userError
 
+            // 2. If Driver, create Driver Record with Tariff
             if (role === 'driver') {
                 const { error: driverError } = await supabase
                     .from('drivers')
-                    .insert({
+                    .upsert({
                         user_id: userData.id,
-                        plate_number: formData.plateNumber,
-                        vehicle_type: formData.vehicleType,
-                        rate_type: formData.rateType
+                        plate_number: plateNumber,
+                        vehicle_type: vehicleType,
+                        rate_type: 'Per Mile',
+                        tariff_per_mile: parseFloat(tariff)
                     })
+
                 if (driverError) throw driverError
             }
 
-            onRegister(formData)
+            // Success
+            onRegister({ name, role, tariff })
         } catch (error: any) {
             console.error("Registration failed:", error)
-            alert("Error registering: " + (error.message || error))
+            alert("Registration failed: " + error.message)
         } finally {
-            setIsSubmitting(false)
+            setLoading(false)
         }
     }
 
     return (
-        <div className="flex items-center justify-center min-h-[60vh] p-4 animate-in slide-in-from-bottom-10 fade-in duration-700">
-            <Card className="w-full max-w-md bg-black border border-white/10 shadow-[0_0_40px_rgba(255,255,255,0.05)]">
-                <CardHeader>
-                    <CardTitle className="text-2xl text-white">
+        <div className="flex justify-center items-center min-h-[80vh] animate-in fade-in zoom-in duration-500">
+            <Card className="w-full max-w-md bg-zinc-900 border-zinc-800 shadow-2xl">
+                <CardHeader className="space-y-1">
+                    <CardTitle className="text-2xl font-bold text-center text-white">
                         {role === 'driver' ? 'Driver Registration' : 'Passenger Registration'}
                     </CardTitle>
-                    <CardDescription className="text-zinc-400">
-                        {role === 'driver' ? 'Join the decentralized fleet.' : 'Create your secure rider profile.'}
+                    <CardDescription className="text-center text-zinc-400">
+                        Complete your profile to start {role === 'driver' ? 'earning' : 'riding'}.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        
+                        {/* 1. NAME FIELD (Visible for Driver to see/set their name) */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-zinc-300 ml-1">Name / ID</label>
-                            <Input
-                                placeholder="Enter your name"
+                            <label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
+                                <User className="w-4 h-4" /> Full Name
+                            </label>
+                            <Input 
+                                placeholder="e.g. John Doe" 
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
                                 required
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:border-white/30 focus:ring-0"
+                                className="bg-zinc-800/50 border-zinc-700 text-white focus:ring-emerald-500"
                             />
                         </div>
 
+                        {/* DRIVER SPECIFIC FIELDS */}
                         {role === 'driver' && (
                             <>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-zinc-300 ml-1">Plate Number</label>
-                                    <Input
-                                        placeholder="ABC-1234"
+                                    <label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
+                                        <Car className="w-4 h-4" /> Vehicle Model
+                                    </label>
+                                    <Input 
+                                        placeholder="e.g. Toyota Prius (Black)" 
+                                        value={vehicleType}
+                                        onChange={(e) => setVehicleType(e.target.value)}
                                         required
-                                        value={formData.plateNumber}
-                                        onChange={(e) => setFormData({ ...formData, plateNumber: e.target.value })}
-                                        className="bg-white/5 border-white/10 text-white placeholder:text-zinc-600 focus:border-white/30 focus:ring-0"
+                                        className="bg-zinc-800/50 border-zinc-700 text-white"
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-zinc-300 ml-1">Vehicle Type</label>
-                                        <select
-                                            className="flex h-10 w-full rounded-md border border-white/10 bg-black px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:border-white/30"
-                                            value={formData.vehicleType}
-                                            onChange={(e) => setFormData({ ...formData, vehicleType: e.target.value })}
-                                        >
-                                            <option value="Car" className="bg-black">Car</option>
-                                            <option value="Motorcycle" className="bg-black">Motorcycle</option>
-                                        </select>
-                                    </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
+                                        <CreditCard className="w-4 h-4" /> License Plate
+                                    </label>
+                                    <Input 
+                                        placeholder="e.g. B 1234 CD" 
+                                        value={plateNumber}
+                                        onChange={(e) => setPlateNumber(e.target.value)}
+                                        required
+                                        className="bg-zinc-800/50 border-zinc-700 text-white"
+                                    />
+                                </div>
 
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-zinc-300 ml-1">Rate Type</label>
-                                        <select
-                                            className="flex h-10 w-full rounded-md border border-white/10 bg-black px-3 py-2 text-sm text-white focus-visible:outline-none focus-visible:border-white/30"
-                                            value={formData.rateType}
-                                            onChange={(e) => setFormData({ ...formData, rateType: e.target.value })}
-                                        >
-                                            <option value="Per KM" className="bg-black">Per KM</option>
-                                            <option value="Fixed Fare" className="bg-black">Fixed Fare</option>
-                                        </select>
-                                    </div>
+                                {/* NEW: TARIFF PER MILE */}
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-zinc-300 flex items-center gap-2">
+                                        <Coins className="w-4 h-4" /> Tariff (ETH per Mile)
+                                    </label>
+                                    <Input 
+                                        type="number"
+                                        step="0.000001"
+                                        placeholder="e.g. 0.005" 
+                                        value={tariff}
+                                        onChange={(e) => setTariff(e.target.value)}
+                                        required
+                                        className="bg-zinc-800/50 border-zinc-700 text-white font-mono"
+                                    />
+                                    <p className="text-xs text-zinc-500">Set your base rate for calculations.</p>
                                 </div>
                             </>
                         )}
 
-                        <Button type="submit" disabled={isSubmitting} className="w-full mt-4 h-11 text-base bg-white text-black hover:bg-zinc-200">
-                            {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : (role === 'driver' ? 'Sign & Register' : 'Create Profile')}
+                        <Button 
+                            type="submit" 
+                            disabled={loading}
+                            className="w-full bg-white text-black hover:bg-zinc-200 font-bold mt-6"
+                        >
+                            {loading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : "Complete Registration"}
                         </Button>
                     </form>
                 </CardContent>
