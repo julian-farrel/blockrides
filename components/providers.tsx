@@ -3,24 +3,25 @@
 import { PrivyProvider } from '@privy-io/react-auth'
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  // Construct the Infura RPC URL
+  const INFURA_ID = process.env.NEXT_PUBLIC_INFURA_API_KEY
+  const RPC_URL = INFURA_ID 
+    ? `https://sepolia.infura.io/v3/${INFURA_ID}`
+    : 'https://rpc.sepolia.org' // Fallback if key is missing
+
   return (
     <PrivyProvider
       appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''}
       config={{
-        // 1. BRANDING CONFIGURATION
         appearance: {
           theme: 'dark',
           accentColor: '#676FFF',
-          logo: '/logo.png', // <--- Points to public/logo.png
+          logo: '/logo.png',
           landingHeader: 'Log in to BlockRides', 
         },
-        
-        // 2. WALLET CONFIGURATION
         embeddedWallets: {
           createOnLogin: 'users-without-wallets',
         },
-
-        // 3. CHAIN CONFIGURATION (Sepolia)
         defaultChain: {
           id: 11155111,
           name: 'Sepolia',
@@ -32,10 +33,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
           },
           rpcUrls: {
             default: {
-              http: ['https://rpc.sepolia.org'],
+              http: [RPC_URL], // <--- UPDATED TO USE INFURA
             },
             public: {
-              http: ['https://rpc.sepolia.org'],
+              http: [RPC_URL], // <--- UPDATED TO USE INFURA
             },
           },
           blockExplorers: {
@@ -58,10 +59,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             },
             rpcUrls: {
               default: {
-                http: ['https://rpc.sepolia.org'],
+                http: [RPC_URL], // <--- UPDATED TO USE INFURA
               },
               public: {
-                http: ['https://rpc.sepolia.org'],
+                http: [RPC_URL], // <--- UPDATED TO USE INFURA
               },
             },
             blockExplorers: {
